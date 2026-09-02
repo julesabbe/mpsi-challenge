@@ -1,0 +1,15 @@
+# Supabase CLI configuration — MPSI Challenge
+# Utilisé par le trigger handle_new_user pour déterminer les Super Admins.
+# Remplacez la valeur par le(s) UID auth de(s) Super Admin(s), séparés par des virgules.
+project_id = "mpsi-challenge"
+
+[app]
+admin_auth_user_ids = "REMPLACEZ_PAR_UID_SUPER_ADMIN"
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://VOTRE-APP.vercel.app"]
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
