@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMyProfile, getMyStudent, getMyTeam } from "@/lib/queries";
 import { TopBar } from "@/components/TopBar";
+import { BottomNav } from "@/components/BottomNav";
 import { SubmitPanel } from "./submit-panel";
 import {
   CATEGORY_EMOJI,
@@ -60,6 +61,7 @@ export default async function ChallengeDetailPage({
   return (
     <div className="mx-auto w-full max-w-lg px-4 pb-24 md:max-w-2xl md:pt-8">
       <TopBar unread={unreadRes.count ?? 0} isAdmin={profile?.role === "admin"} />
+      <BottomNav />
 
       <div className="animate-rise mt-4 md:mt-0">
         <Link

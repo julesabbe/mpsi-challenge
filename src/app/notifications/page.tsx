@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getMyProfile, getMyStudent } from "@/lib/queries";
 import { TopBar } from "@/components/TopBar";
+import { BottomNav } from "@/components/BottomNav";
 import { EmptyState } from "@/components/EmptyState";
 import { NotificationsList } from "./list";
 import { timeAgo } from "@/lib/utils";
@@ -31,6 +32,7 @@ export default async function NotificationsPage() {
   return (
     <div className="mx-auto w-full max-w-lg px-4 pb-24 md:max-w-2xl md:pt-8">
       <TopBar unread={0} isAdmin={profile?.role === "admin"} />
+      <BottomNav />
 
       <div className="mt-4 md:mt-0">
         <h1 className="text-2xl font-black tracking-tight text-white">

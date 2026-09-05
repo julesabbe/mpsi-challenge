@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSupabaseCtx } from "@/lib/supabase/provider";
+import { BackButton } from "@/components/BackButton";
 import { cx } from "@/lib/utils";
 
 type Track = "mpsi" | "mpsi2";
@@ -84,6 +85,9 @@ export function LoginStudentForm({ students }: { students: StudentItem[] }) {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-10 pt-14">
+      <div className="mb-6">
+        <BackButton fallback="/guest" label="Accueil" />
+      </div>
       <div className="animate-rise">
         <p className="text-sm font-semibold uppercase tracking-widest text-violet-400">
           Connexion

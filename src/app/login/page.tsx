@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSupabaseCtx } from "@/lib/supabase/provider";
+import { BackButton } from "@/components/BackButton";
 
 export default function LoginPage() {
   const { supabase } = useSupabaseCtx();
@@ -29,6 +30,11 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6">
+      <BackButton
+        fallback="/guest"
+        label="Accueil"
+        className="fixed left-4 top-4"
+      />
       <div className="animate-rise w-full max-w-sm">
         <div className="mb-8 text-center">
           <span className="text-6xl" aria-hidden>
