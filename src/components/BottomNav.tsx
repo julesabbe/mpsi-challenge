@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSupabaseCtx } from "@/lib/supabase/provider";
 import { cx } from "@/lib/utils";
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { isMpsi2 } = useSupabaseCtx();
+  const router = useRouter();
+  const { supabase, isMpsi2 } = useSupabaseCtx();
 
   const tabs = [
     { href: "/dashboard", label: "Accueil", icon: "🏠" },
@@ -19,9 +20,16 @@ export function BottomNav() {
     { href: "/profile", label: "Profil", icon: "👤" },
   ];
 
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    // Déconnexion totale : retour à la page d'accueil publique.
+    router.replace("/guest");
+    router.refresh();
+  }
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-zinc-950/90 backdrop-blur-lg md:hidden">
-      <div className="mx-auto grid max-w-lg grid-cols-5">
+      <div className="mx-auto grid max-w-lg grid-cols-6">
         {tabs.map((tab) => {
           const active =
             pathname === tab.href || pathname.startsWith(tab.href + "/");
@@ -41,6 +49,16 @@ export function BottomNav() {
             </Link>
           );
         })}
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium text-red-300/80 transition-colors hover:text-red-300"
+        >
+          <span className="text-lg leading-none" aria-hidden>
+            🚪
+          </span>
+          Quitter
+        </button>
       </div>
     </nav>
   );
