@@ -1,4 +1,11 @@
 -- ============================================================================
+-- ⚠️  OBSOLÈTE — NE PAS EXÉCUTER.
+-- Ancien script « identité par appareil » (session anonyme + prénom),
+-- remplacé par les migrations 0002 → 0010 (comptes élèves par mot de passe,
+-- aucune donnée simulée). Utilisez demo-and-admin.sql (compte admin) puis
+-- créez défis/élèves depuis l'interface /admin.
+-- ============================================================================
+-- ============================================================================
 -- MPSI CHALLENGE — SCRIPT UNIQUE À EXÉCUTER (Dashboard Supabase → SQL Editor)
 -- Modèle : seul le Super Admin a un compte. Les élèves sont identifiés par
 -- leur appareil (session anonyme Supabase liée à leur prénom).

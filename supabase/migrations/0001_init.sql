@@ -482,24 +482,5 @@ create policy "submissions video upload" on storage.objects
   );
 
 -- ------------------------------------------------------------------ seed ----
-
-insert into public.challenges (title, description, points, difficulty, category) values
-  ('Photo d''équipe devant la prépa', 'Faire une photo avec toute l''équipe devant l''entrée de la prépa.', 100, 'easy', 'school'),
-  ('Chanson dans un lieu public', 'Faire chanter toute l''équipe dans un lieu public (gare, rue, centre commercial…).', 250, 'medium', 'social'),
-  ('Reproduire une scène de film', 'Reproduire une célèbre scène de film, costumes et décor compris. Film obligatoire.', 500, 'hard', 'creative'),
-  ('Pyramide humaine', 'Réaliser une pyramide humaine à 3 avec au moins 2 secondes de tenue.', 150, 'medium', 'sport'),
-  ('Rêve de la promo', 'Demandez à un professeur de réaliser un défi buffon avec vous.', 300, 'medium', 'funny'),
-  ('100 pompes cumulées', 'Effectuer 100 pompes cumulées dans la journée, filmées en continu par segments.', 200, 'hard', 'sport'),
-  ('Cours en costume', 'Assister à un cours entier en costume trois-pièces.', 150, 'easy', 'school'),
-  ('Flashmob au lycée', 'Organiser un mini flashmob de 30 secondes à la pause déjeuner.', 350, 'hard', 'social'),
-  ('Pause publicitaire', 'Créer une publicité inventée de 30 secondes pour un objet de votre choix.', 250, 'medium', 'creative'),
-  ('Défi du chef', 'Préparer et faire goûter un plat mystère à un élève d''une autre équipe.', 200, 'medium', 'funny'),
-  ('Puzzle géant', 'Terminer un puzzle de 500 pièces en moins de 48 h et montrer le résultat.', 300, 'medium', 'team'),
-  ('L''ascension', 'Gravir le plus haut point de la ville et prendre une photo d''équipe.', 400, 'hard', 'sport'),
-  ('Karaoké 10', 'Chanter 10 chansons consécutives au karaoké sans oublier les paroles.', 450, 'hard', 'social'),
-  ('Défi d''improvisation', 'Improviser un discours de 2 minutes sur un sujet imposé par une autre équipe.', 200, 'medium', 'creative'),
-  ('L''extrême : saut dans l''inconnu', 'Réaliser un défi sportif extrême (accrobranche, escalade…). Preuve obligatoire.', 800, 'extreme', 'sport'),
-  ('Secret de la prépa', 'Découvrir et documenter un lieu secret ou insolite de la prépa.', 250, 'medium', 'funny'),
-  ('Cuisine du monde', 'Faire goûter un plat typique d''un autre pays à la classe.', 300, 'medium', 'social'),
-  ('Recréez un tableau', 'Recréer un tableau célèbre en photo avec les membres de l''équipe.', 350, 'hard', 'creative')
-on conflict do nothing;
+-- AUCUN contenu simulé : la liste des défis est vide par défaut.
+-- Le Super Admin crée les défis depuis /admin/challenges.
