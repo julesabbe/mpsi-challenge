@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { EmptyState } from "@/components/EmptyState";
 import { ProgressBar } from "@/components/EmptyState";
 import { LeaderboardList } from "@/components/LeaderboardList";
+import { TeamPresentation } from "@/components/TeamPresentation";
 import { ChallengeCard } from "@/components/ChallengeCard";
 import { formatPoints, ordinalRank } from "@/lib/utils";
 import type { Challenge, Submission, SubmissionStatus } from "@/lib/types";
@@ -233,6 +234,16 @@ export default async function DashboardPage({
         </div>
       </section>
       )}
+
+      {/* Vidéo de présentation de l'équipe */}
+      {team ? (
+        <div className="mt-4">
+          <TeamPresentation
+            teamId={team.id}
+            videoPath={team.presentation_video_path ?? null}
+          />
+        </div>
+      ) : null}
 
       {/* Classement top 3 */}
       <section className="mt-6">

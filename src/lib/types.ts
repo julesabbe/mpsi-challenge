@@ -37,6 +37,8 @@ export interface Team {
   name: string;
   emoji: string;
   created_at: string;
+  presentation_video_path?: string | null;
+  presentation_uploaded_at?: string | null;
 }
 
 export interface TeamMember {

@@ -4,6 +4,7 @@ import { getMyProfile, getMyStudent, getMyTeam, getTeamScores } from "@/lib/quer
 import { TopBar } from "@/components/TopBar";
 import { BottomNav } from "@/components/BottomNav";
 import { EmptyState, ProgressBar } from "@/components/EmptyState";
+import { TeamPresentation } from "@/components/TeamPresentation";
 import { Badge } from "@/components/PageHeader";
 import { formatDate, formatPoints, ordinalRank, studentName } from "@/lib/utils";
 import type { Challenge, Submission } from "@/lib/types";
@@ -162,6 +163,13 @@ export default async function TeamPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mt-4">
+        <TeamPresentation
+          teamId={team.id}
+          videoPath={team.presentation_video_path ?? null}
+        />
       </div>
 
       <section className="mt-6">
