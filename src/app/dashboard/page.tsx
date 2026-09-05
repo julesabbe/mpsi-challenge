@@ -27,7 +27,6 @@ export default async function DashboardPage({
   if (!student) redirect("/login-student");
 
   const team = await getMyTeam(student.id);
-  if (!team && student.track === "mpsi") redirect("/teams");
 
   const supabase = await createClient();
   const [scores, subsRes, chRes, unreadRes] = await Promise.all([
@@ -50,7 +49,7 @@ export default async function DashboardPage({
       .eq("read", false),
   ]);
 
-  const myRow = scores.find((r) => r.team.id === team.id);
+  const myRow = team ? scores.find((r) => r.team.id === team.id) : undefined;
   const challenges = (chRes.data ?? []) as unknown as Challenge[];
   const subs = (subsRes.data ?? []) as Pick<
     Submission,
@@ -121,16 +120,32 @@ export default async function DashboardPage({
         </div>
       ) : null}
 
-      {/* Mon équipe (uniquement si l'élève en a une) */}
+      {/* Pas encore d'équipe : l'accueil reste accessible, on rejoint plus tard */}
       {!team ? (
-        <section className="card animate-rise p-5 text-center">
-          <span className="text-4xl" aria-hidden>⚙️</span>
-          <p className="mt-2 font-black text-white">Compte MP/PSI</p>
-          <p className="mt-1 text-sm text-zinc-400">
-            Tu suis la compétition : classement, défis, équipes et vidéos. Les
-            équipes MPSI s&apos;occupent du reste !
-          </p>
-        </section>
+        student.track === "mpsi2" ? (
+          <section className="card animate-rise p-5 text-center">
+            <span className="text-4xl" aria-hidden>⚙️</span>
+            <p className="mt-2 font-black text-white">Compte MP/PSI</p>
+            <p className="mt-1 text-sm text-zinc-400">
+              Tu suis la compétition : classement, défis, équipes et vidéos.
+              Les équipes MPSI s&apos;occupent du reste !
+            </p>
+          </section>
+        ) : (
+          <section className="card animate-rise border-violet-500/40 bg-violet-500/10 p-5 text-center">
+            <span className="text-4xl" aria-hidden>🤝</span>
+            <p className="mt-2 font-black text-white">
+              Tu n&apos;as pas encore d&apos;équipe
+            </p>
+            <p className="mt-1 text-sm text-zinc-400">
+              Explore le classement et les défis — rejoint une équipe quand tu
+              es prêt !
+            </p>
+            <Link href="/teams" className="btn-primary mt-4 w-full">
+              REJOINDRE UNE ÉQUIPE
+            </Link>
+          </section>
+        )
       ) : (
       <section className="card animate-rise overflow-hidden p-0">
         <div className="bg-gradient-to-r from-violet-600/25 to-fuchsia-500/15 px-5 py-4">

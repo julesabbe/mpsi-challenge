@@ -64,7 +64,7 @@ export function RegisterForm() {
       });
       if (signInError) throw signInError;
 
-      router.replace("/teams");
+      router.replace("/dashboard");
       router.refresh();
     } catch (err) {
       setError((err as Error).message || "Une erreur est survenue.");

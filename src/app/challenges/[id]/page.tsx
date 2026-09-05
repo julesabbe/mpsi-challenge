@@ -30,7 +30,6 @@ export default async function ChallengeDetailPage({
   if (!student) redirect("/login-student");
   const team = await getMyTeam(student.id);
   const isMpsi = student.track === "mpsi";
-  if (!team && isMpsi) redirect("/teams");
 
   const supabase = await createClient();
   const [chRes, subRes, unreadRes] = await Promise.all([
@@ -105,12 +104,24 @@ export default async function ChallengeDetailPage({
 
       <div className="mt-5">
         {!team ? (
-          <div className="card p-5 text-center">
-            <p className="text-sm text-zinc-400">
-              👀 Tu suis les défis en MP/PSI — les équipes MPSI s&apos;en
-              chargent ! Aucune soumission possible depuis ton compte.
-            </p>
-          </div>
+          isMpsi ? (
+            <div className="card p-5 text-center">
+              <p className="text-sm text-zinc-400">
+                🤝 Tu n&apos;as pas encore d&apos;équipe — rejoins-en une pour
+                pouvoir soumettre une preuve.
+              </p>
+              <Link href="/teams" className="btn-primary mt-4 w-full">
+                REJOINDRE UNE ÉQUIPE
+              </Link>
+            </div>
+          ) : (
+            <div className="card p-5 text-center">
+              <p className="text-sm text-zinc-400">
+                👀 Tu suis les défis en MP/PSI — les équipes MPSI s&apos;en
+                chargent ! Aucune soumission possible depuis ton compte.
+              </p>
+            </div>
+          )
         ) : approved ? (
           <div className="card animate-pop border-emerald-500/40 bg-emerald-500/10 p-5 text-center">
             <span className="text-4xl" aria-hidden>

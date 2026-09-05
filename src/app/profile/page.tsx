@@ -16,7 +16,6 @@ export default async function ProfilePage() {
   if (profile?.role === "admin" && !student) redirect("/admin");
   if (!student) redirect("/login-student");
   const team = await getMyTeam(student.id);
-  if (!team && student.track === "mpsi") redirect("/teams");
 
   const supabase = await createClient();
   const [scores, mySubs, unreadRes] = await Promise.all([

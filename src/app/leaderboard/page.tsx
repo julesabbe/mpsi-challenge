@@ -16,7 +16,6 @@ export default async function LeaderboardPage() {
   if (profile?.role === "admin" && !student) redirect("/admin");
   if (!student) redirect("/login-student");
   const team = await getMyTeam(student.id);
-  if (!team && student.track === "mpsi") redirect("/teams");
 
   const supabase = await createClient();
   const [scores, unreadRes] = await Promise.all([
