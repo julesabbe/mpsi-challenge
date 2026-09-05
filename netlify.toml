@@ -1,0 +1,16 @@
+# ============================================================================
+# Netlify — configuration de build explicite pour MPSI Challenge (Next.js)
+# Variables d'environnement à définir dans le dashboard Netlify :
+#   NEXT_PUBLIC_SUPABASE_URL      https://qdybahzbixudaeowefdi.supabase.co
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY (clé anon — ne jamais exposer la clé service)
+#
+# Le runtime Next.js de Netlify (@netlify/plugin-nextjs) gère lui-même les
+# routes App Router : aucun redirect global — il casserait les pages dynamiques.
+# ============================================================================
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
