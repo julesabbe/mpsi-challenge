@@ -6,14 +6,16 @@ import { useSupabaseCtx } from "@/lib/supabase/provider";
 import { BackButton } from "@/components/BackButton";
 import { cx } from "@/lib/utils";
 
-function useTabs() {
-  const { isMpsi2 } = useSupabaseCtx();
+function useTabs(isMpsi2: boolean) {
   return [
     { href: "/dashboard", label: "Accueil", icon: "🏠" },
     { href: "/leaderboard", label: "Classement", icon: "🏆" },
     { href: "/challenges", label: "Défis", icon: "🎯" },
     ...(isMpsi2
-      ? [{ href: "/videos", label: "Vidéos", icon: "🎥" }]
+      ? [
+          { href: "/videos", label: "Vidéos", icon: "🎥" },
+          { href: "/parrainage", label: "Parrain", icon: "🕊️" },
+        ]
       : [{ href: "/team", label: "Équipe", icon: "👥" }]),
     { href: "/profile", label: "Profil", icon: "👤" },
   ];
@@ -22,8 +24,8 @@ function useTabs() {
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { supabase } = useSupabaseCtx();
-  const tabs = useTabs();
+  const { supabase, isMpsi2 } = useSupabaseCtx();
+  const tabs = useTabs(isMpsi2);
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(href + "/");
@@ -82,7 +84,12 @@ export function BottomNav() {
 
       {/* Barre de navigation (mobile) */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-zinc-950/90 backdrop-blur-lg md:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-6">
+        <div
+          className={cx(
+            "mx-auto grid max-w-lg",
+            isMpsi2 ? "grid-cols-7" : "grid-cols-6"
+          )}
+        >
           {tabs.map((tab) => {
             const active = isActive(tab.href);
             return (
@@ -90,7 +97,8 @@ export function BottomNav() {
                 key={tab.href}
                 href={tab.href}
                 className={cx(
-                  "flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition-colors",
+                  "flex flex-col items-center gap-0.5 py-2.5 font-medium transition-colors",
+                  isMpsi2 ? "text-[10px]" : "text-[11px]",
                   active
                     ? "text-violet-400"
                     : "text-zinc-500 hover:text-zinc-300"
@@ -106,7 +114,10 @@ export function BottomNav() {
           <button
             type="button"
             onClick={handleSignOut}
-            className="flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium text-red-300/80 transition-colors hover:text-red-300"
+            className={cx(
+              "flex flex-col items-center gap-0.5 py-2.5 font-medium text-red-300/80 transition-colors hover:text-red-300",
+              isMpsi2 ? "text-[10px]" : "text-[11px]"
+            )}
           >
             <span className="text-lg leading-none" aria-hidden>
               🚪

@@ -39,6 +39,8 @@ export interface Team {
   created_at: string;
   presentation_video_path?: string | null;
   presentation_uploaded_at?: string | null;
+  godparent_student_id?: string | null;
+  godparent_chosen_at?: string | null;
 }
 
 export interface TeamMember {

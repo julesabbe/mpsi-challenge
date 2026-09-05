@@ -5,6 +5,7 @@ import { TopBar } from "@/components/TopBar";
 import { BottomNav } from "@/components/BottomNav";
 import { EmptyState, ProgressBar } from "@/components/EmptyState";
 import { TeamPresentation } from "@/components/TeamPresentation";
+import { GodparentPicker } from "@/components/GodparentPicker";
 import { Badge } from "@/components/PageHeader";
 import { formatDate, formatPoints, ordinalRank, studentName } from "@/lib/utils";
 import type { Challenge, Submission } from "@/lib/types";
@@ -22,7 +23,7 @@ export default async function TeamPage() {
   if (!team) redirect("/teams");
 
   const supabase = await createClient();
-  const [scores, subRes, unreadRes] = await Promise.all([
+  const [scores, subRes, unreadRes, offersRes, chosenRes] = await Promise.all([
     getTeamScores(),
     supabase
       .from("submissions")
@@ -34,6 +35,17 @@ export default async function TeamPage() {
       .select("*", { count: "exact", head: true })
       .eq("user_id", student.id)
       .eq("read", false),
+    supabase
+      .from("godparent_offers")
+      .select("id, student_id, students(first_name, last_name)")
+      .eq("team_id", team.id),
+    team.godparent_student_id
+      ? supabase
+          .from("students")
+          .select("id, first_name, last_name")
+          .eq("id", team.godparent_student_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null } as unknown as { data: unknown }),
   ]);
 
   const myRow = scores.find((r) => r.team.id === team.id);
@@ -169,6 +181,38 @@ export default async function TeamPage() {
         <TeamPresentation
           teamId={team.id}
           videoPath={team.presentation_video_path ?? null}
+        />
+      </div>
+
+      <div className="mt-4">
+        <GodparentPicker
+          teamId={team.id}
+          chosen={(() => {
+            const c = chosenRes.data as unknown as
+              | { id: string; first_name: string; last_name: string | null }
+              | null;
+            return c
+              ? {
+                  id: c.id,
+                  name: c.last_name
+                    ? `${c.first_name} ${c.last_name}`
+                    : c.first_name,
+                }
+              : null;
+          })()}
+          candidates={((offersRes.data ?? []) as unknown as Array<{
+            student_id: string;
+            students: { first_name: string; last_name: string | null } | null;
+          }>).map((o) => ({
+            id: o.student_id,
+            name: o.students
+              ? o.students.last_name
+                ? `${o.students.first_name} ${o.students.last_name}`
+                : o.students.first_name
+              : "MP/PSI",
+          }))}
+          canChoose={!team.godparent_student_id}
+          isAdmin={profile?.role === "admin"}
         />
       </div>
 
