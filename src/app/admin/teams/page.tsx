@@ -13,6 +13,8 @@ export default async function AdminTeamsPage() {
       .from("students")
       .select("id, first_name, last_name, active")
       .eq("active", true)
+      // Seuls les élèves MPSI peuvent être membres d'une équipe
+      .eq("track", "mpsi")
       .order("first_name"),
   ]);
 

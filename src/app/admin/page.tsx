@@ -9,7 +9,7 @@ export default async function AdminDashboardPage() {
   const supabase = await createClient();
   const [studentsRes, teamsRes, challengesRes, subsRes, txRes, scores] =
     await Promise.all([
-      supabase.from("students").select("id, active"),
+      supabase.from("students").select("id, active, track"),
       supabase.from("teams").select("id"),
       supabase.from("challenges").select("id, active"),
       supabase
@@ -21,7 +21,14 @@ export default async function AdminDashboardPage() {
       getTeamScores(),
     ]);
 
-  const students = studentsRes.data ?? [];
+  const students = (studentsRes.data ?? []) as Array<{
+    id: string;
+    active: boolean;
+    track: string;
+  }>;
+  // Seuls les élèves MPSI participent : les comptes MP/PSI (spectateurs)
+  // ne comptent pas dans les statistiques élèves.
+  const mpsiStudents = students.filter((s) => s.track === "mpsi");
   const challenges = challengesRes.data ?? [];
   const tx = txRes.data ?? [];
 
@@ -35,7 +42,7 @@ export default async function AdminDashboardPage() {
     .reduce((acc: number, t: { amount: number }) => acc + t.amount, 0);
 
   const stats = [
-    { label: "Élèves", value: String(students.length), icon: "👥", href: "/admin/students", sub: `${students.filter((s: { active: boolean }) => s.active).length} actifs` },
+    { label: "Élèves MPSI", value: String(mpsiStudents.length), icon: "👥", href: "/admin/students", sub: `${mpsiStudents.filter((s) => s.active).length} actifs` },
     { label: "Équipes", value: String(teamsRes.data?.length ?? 0), icon: "🏆", href: "/admin/teams" },
     { label: "Défis", value: String(challenges.length), icon: "🎯", href: "/admin/challenges", sub: `${challenges.filter((c: { active: boolean }) => c.active).length} actifs` },
     { label: "Vidéos en attente", value: String(pendingTotal ?? 0), icon: "🎥", href: "/admin/submissions" },
