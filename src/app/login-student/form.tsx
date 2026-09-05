@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSupabaseCtx } from "@/lib/supabase/provider";
@@ -8,40 +8,58 @@ import { cx } from "@/lib/utils";
 
 type Track = "mpsi" | "mpsi2";
 
-export function LoginStudentForm() {
+type StudentItem = {
+  id: string;
+  first_name: string;
+  last_name: string | null;
+  track: Track;
+};
+
+export function LoginStudentForm({ students }: { students: StudentItem[] }) {
   const { supabase } = useSupabaseCtx();
   const router = useRouter();
 
-  const [track, setTrack] = useState<Track | null>(null);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [track, setTrack] = useState<Track>("mpsi");
+  const [selected, setSelected] = useState<StudentItem | null>(null);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const list = useMemo(
+    () => students.filter((s) => s.track === track),
+    [students, track]
+  );
+
+  function pickTrack(t: Track) {
+    setTrack(t);
+    setSelected(null);
+    setPassword("");
+    setError(null);
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!track) {
-      setError("Choisis ta filière.");
+    if (!selected) {
+      setError("Choisis ton nom dans la liste.");
       return;
     }
     setBusy(true);
     try {
-      // 1) Retrouver l'e-mail technique correspondant à (filière, nom, mot de passe)
+      // 1) Retrouver l'e-mail technique correspondant au compte choisi
       const { data: emailData, error: emailError } = await supabase.rpc(
         "student_login",
         {
-          p_track: track,
-          p_first_name: firstName.trim(),
-          p_last_name: lastName.trim(),
+          p_track: selected.track,
+          p_first_name: selected.first_name,
+          p_last_name: selected.last_name ?? "",
           p_password: password,
         }
       );
       if (emailError) throw emailError;
       const technicalEmail = emailData as unknown as string | null;
       if (!technicalEmail) {
-        setError("Filière, prénom, nom ou mot de passe incorrect.");
+        setError("Mot de passe incorrect.");
         return;
       }
 
@@ -51,7 +69,7 @@ export function LoginStudentForm() {
         password,
       });
       if (signInError) {
-        setError("Filière, prénom, nom ou mot de passe incorrect.");
+        setError("Mot de passe incorrect.");
         return;
       }
 
@@ -71,18 +89,19 @@ export function LoginStudentForm() {
           Connexion
         </p>
         <h1 className="mt-1 text-3xl font-black tracking-tight text-white">
-          Content de te revoir !
+          Qui es-tu ?
         </h1>
         <p className="mt-2 text-sm text-zinc-400">
-          Ta filière, ton nom, ton mot de passe — rien d&apos;autre.
+          Sélectionne ton nom dans la liste, puis entre ton mot de passe.
         </p>
       </div>
 
       <form onSubmit={submit} className="animate-rise mt-6 space-y-4">
+        {/* Filière */}
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={() => setTrack("mpsi")}
+            onClick={() => pickTrack("mpsi")}
             className={cx(
               "card p-4 text-center transition",
               track === "mpsi"
@@ -95,7 +114,7 @@ export function LoginStudentForm() {
           </button>
           <button
             type="button"
-            onClick={() => setTrack("mpsi2")}
+            onClick={() => pickTrack("mpsi2")}
             className={cx(
               "card p-4 text-center transition",
               track === "mpsi2"
@@ -108,51 +127,79 @@ export function LoginStudentForm() {
           </button>
         </div>
 
-        <div className="card space-y-3 p-4">
-          <div>
-            <label htmlFor="log-first" className="mb-1 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-              Prénom
-            </label>
-            <input
-              id="log-first"
-              className="input-base"
-              placeholder="Ex. : Jules"
-              value={firstName}
-              maxLength={40}
-              autoComplete="off"
-              onChange={(e) => setFirstName(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="log-last" className="mb-1 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-              Nom de famille
-            </label>
-            <input
-              id="log-last"
-              className="input-base"
-              placeholder="Ex. : Abbe"
-              value={lastName}
-              maxLength={40}
-              autoComplete="off"
-              onChange={(e) => setLastName(e.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="log-pass" className="mb-1 block text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-              Mot de passe
-            </label>
+        {/* Liste des élèves inscrits */}
+        <div className="card p-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+            {track === "mpsi" ? "Élèves MPSI" : "Élèves MP / PSI"}
+          </p>
+          {list.length === 0 ? (
+            <p className="py-4 text-center text-sm text-zinc-500">
+              Aucun élève inscrit en{" "}
+              {track === "mpsi" ? "MPSI" : "MP / PSI"} pour le moment.
+            </p>
+          ) : (
+            <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
+              {list.map((s) => {
+                const picked = selected?.id === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      setSelected(s);
+                      setPassword("");
+                      setError(null);
+                    }}
+                    className={cx(
+                      "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition",
+                      picked
+                        ? "border-violet-500/50 bg-violet-500/10"
+                        : "border-white/5 bg-white/[0.02] hover:border-white/20"
+                    )}
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-bold">
+                      {s.first_name.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="flex-1 text-sm font-medium text-white">
+                      {s.first_name} {s.last_name ?? ""}
+                    </span>
+                    {picked ? (
+                      <span className="text-xs font-bold text-violet-300">✓</span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Mot de passe — visible quand un élève est sélectionné */}
+        {selected ? (
+          <div className="card space-y-3 p-4">
+            <div>
+              <p className="text-sm font-bold text-white">
+                {selected.first_name} {selected.last_name ?? ""}
+              </p>
+              <p className="text-xs text-zinc-500">Entre ton mot de passe.</p>
+            </div>
             <input
               id="log-pass"
               type="password"
               className="input-base"
+              placeholder="Mot de passe"
               value={password}
               autoComplete="current-password"
+              autoFocus
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-        </div>
+        ) : null}
 
-        <button type="submit" disabled={busy} className="btn-primary">
+        <button
+          type="submit"
+          disabled={busy || !selected}
+          className="btn-primary"
+        >
           {busy ? "Connexion…" : "SE CONNECTER"}
         </button>
 
