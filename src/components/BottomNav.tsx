@@ -2,22 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSupabaseCtx } from "@/lib/supabase/provider";
 import { cx } from "@/lib/utils";
-
-const TABS = [
-  { href: "/dashboard", label: "Accueil", icon: "🏠" },
-  { href: "/leaderboard", label: "Classement", icon: "🏆" },
-  { href: "/challenges", label: "Défis", icon: "🎯" },
-  { href: "/team", label: "Équipe", icon: "👥" },
-  { href: "/profile", label: "Profil", icon: "👤" },
-];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { isMpsi2 } = useSupabaseCtx();
+
+  const tabs = [
+    { href: "/dashboard", label: "Accueil", icon: "🏠" },
+    { href: "/leaderboard", label: "Classement", icon: "🏆" },
+    { href: "/challenges", label: "Défis", icon: "🎯" },
+    ...(isMpsi2
+      ? [{ href: "/videos", label: "Vidéos", icon: "🎥" }]
+      : [{ href: "/team", label: "Équipe", icon: "👥" }]),
+    { href: "/profile", label: "Profil", icon: "👤" },
+  ];
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-zinc-950/90 backdrop-blur-lg md:hidden">
       <div className="mx-auto grid max-w-lg grid-cols-5">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const active =
             pathname === tab.href || pathname.startsWith(tab.href + "/");
           return (

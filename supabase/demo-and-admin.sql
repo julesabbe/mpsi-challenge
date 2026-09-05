@@ -7,7 +7,11 @@
 --   1) Active le mot de passe du Super Admin (julesabbe0307@gmail.com)
 --      et lui donne le rôle admin
 --   2) Passe la base en « mode invité / identité par appareil »
---   3) Insère la liste des élèves (modifiable librement)
+--   3) Insère la liste des élèves
+--   4) Insère 18 défis
+--   5) Crée 8 équipes de démo avec des scores (CLASSEMENT FAUX, pour la démo)
+--
+-- Le script est IDEMPOTENT : le relancer n'insère pas de doublons.
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
@@ -121,39 +125,13 @@ end $$;
 create unique index if not exists students_first_name_uniq
   on public.students (lower(first_name));
 
--- Les policies RLS existantes utilisent my_student_id() / my_team_id() et le
--- rôle « authenticated » (les sessions anonymes Supabase ont ce rôle) :
--- elles fonctionnent donc sans changement. Vérification :
---   select s.first_name from public.students s where s.anon_user_id = auth.uid();
-
 -- ---------------------------------------------------------------------------
 -- 3) ÉLÈVES (facultatif) — liste pré-remplie, revendicable par les appareils
 --    Les élèves peuvent aussi ajouter eux-mêmes leur prénom : cette liste sert
 --    juste de base (noms déjà disponibles avant que les appareils les prennent).
 -- ---------------------------------------------------------------------------
-insert into public.students (first_name, last_name) values
-  ('Arthur',  null),
-  ('Jules',   null),
-  ('Thomas',  null),
-  ('Hugo',    null),
-  ('Louis',   null),
-  ('Gabriel', null),
-  ('Raphaël', null),
-  ('Léo',     null),
-  ('Timéo',   null),
-  ('Lucas',   null),
-  ('Maxime',  null),
-  ('Enzo',    null),
-  ('Nathan',  null),
-  ('Clément', null),
-  ('Théo',    null),
-  ('Baptiste',null),
-  ('Noah',    null),
-  ('Sacha',   null),
-  ('Paul',    null),
-  ('Adam',    null),
-  ('Malo',    null),
-  ('Ethan',   null),
-  ('Antoine', null),
-  ('Valentin',null)
-on conflict do nothing;
+-- SECTION 3 (liste d'eleves pre-remplie) SUPPRIMEE : aucun eleve invente.
+-- Les eleves s'inscrivent eux-memes (filiere + prenom + nom + mot de passe).
+-- SECTION 4 (defis pre-remplis) SUPPRIMEE : le Super Admin cree les vrais
+-- defis depuis /admin/challenges.
+-- ============================================================================

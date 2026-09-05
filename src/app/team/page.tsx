@@ -16,9 +16,9 @@ export default async function TeamPage() {
   const student = await getMyStudent();
 
   if (profile?.role === "admin" && !student) redirect("/admin");
-  if (!student) redirect("/select-student");
+  if (!student) redirect("/login-student");
   const team = await getMyTeam(student.id);
-  if (!team) redirect("/create-team");
+  if (!team) redirect("/teams");
 
   const supabase = await createClient();
   const [scores, subRes, unreadRes] = await Promise.all([

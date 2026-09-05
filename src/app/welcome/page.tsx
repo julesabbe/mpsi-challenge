@@ -32,15 +32,15 @@ export default function WelcomePage() {
           </span>
         </div>
 
-        <Link
-          href="/select-student"
-          className="btn-primary mt-10 text-lg tracking-wide"
-        >
-          COMMENCER
+        <Link href="/register" className="btn-primary mt-10 text-lg tracking-wide">
+          S&apos;INSCRIRE
+        </Link>
+        <Link href="/login-student" className="btn-ghost mt-3 block w-full text-center font-semibold">
+          J&apos;AI DÉJÀ UN COMPTE
         </Link>
 
         <p className="mt-6 text-xs text-zinc-500">
-          Déjà un compte ?{" "}
+          Super Admin ?{" "}
           <Link href="/login" className="text-violet-300 hover:underline">
             Se connecter
           </Link>

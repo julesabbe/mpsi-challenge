@@ -24,18 +24,20 @@ export default async function DashboardPage({
   const student = await getMyStudent();
 
   if (profile?.role === "admin" && !student) redirect("/admin");
-  if (!student) redirect("/select-student");
+  if (!student) redirect("/login-student");
 
   const team = await getMyTeam(student.id);
-  if (!team) redirect("/create-team");
+  if (!team && student.track === "mpsi") redirect("/teams");
 
   const supabase = await createClient();
   const [scores, subsRes, chRes, unreadRes] = await Promise.all([
     getTeamScores(),
-    supabase
-      .from("submissions")
-      .select("challenge_id, status, submitted_at")
-      .eq("team_id", team.id),
+    team
+      ? supabase
+          .from("submissions")
+          .select("challenge_id, status, submitted_at")
+          .eq("team_id", team.id)
+      : Promise.resolve({ data: [] } as unknown as { data: Pick<Submission, "challenge_id" | "status" | "submitted_at">[] }),
     supabase
       .from("challenges")
       .select("*")
@@ -119,7 +121,17 @@ export default async function DashboardPage({
         </div>
       ) : null}
 
-      {/* Mon équipe */}
+      {/* Mon équipe (uniquement si l'élève en a une) */}
+      {!team ? (
+        <section className="card animate-rise p-5 text-center">
+          <span className="text-4xl" aria-hidden>⚙️</span>
+          <p className="mt-2 font-black text-white">Compte MP/PSI</p>
+          <p className="mt-1 text-sm text-zinc-400">
+            Tu suis la compétition : classement, défis, équipes et vidéos. Les
+            équipes MPSI s&apos;occupent du reste !
+          </p>
+        </section>
+      ) : (
       <section className="card animate-rise overflow-hidden p-0">
         <div className="bg-gradient-to-r from-violet-600/25 to-fuchsia-500/15 px-5 py-4">
           <p className="text-[11px] font-bold uppercase tracking-widest text-violet-300">
@@ -205,6 +217,7 @@ export default async function DashboardPage({
           ) : null}
         </div>
       </section>
+      )}
 
       {/* Classement top 3 */}
       <section className="mt-6">
@@ -225,7 +238,7 @@ export default async function DashboardPage({
         ) : (
           <LeaderboardList
             rows={scores.slice(0, 3)}
-            myTeamId={team.id}
+            myTeamId={team?.id}
           />
         )}
       </section>
@@ -233,7 +246,9 @@ export default async function DashboardPage({
       {/* Défis à faire */}
       <section className="mt-6">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-extrabold text-white">🎯 Défis à faire</h2>
+          <h2 className="text-lg font-extrabold text-white">
+            {team ? "🎯 Défis à faire" : "🎯 Défis en cours"}
+          </h2>
           <Link
             href="/challenges"
             className="text-sm font-semibold text-violet-300 hover:underline"

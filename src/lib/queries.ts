@@ -2,8 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { Profile, Student, Team } from "@/lib/types";
 
 /**
- * Élève lié à l'appareil courant (session anonyme) ou au compte auth (admin
- * ayant aussi une identité élève). Renvoie null pour le mode invité.
+ * Élève lié au compte auth connecté (session Supabase — fonctionne depuis
+ * n'importe quel appareil). Renvoie null si aucun compte élève connecté.
  */
 export async function getMyStudent(): Promise<Student | null> {
   const supabase = await createClient();
@@ -12,16 +12,6 @@ export async function getMyStudent(): Promise<Student | null> {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // 1) Liaison par appareil (session anonyme)
-  const { data: anonStudent } = await supabase
-    .from("students")
-    .select("*")
-    .eq("anon_user_id", user.id)
-    .eq("active", true)
-    .maybeSingle();
-  if (anonStudent) return anonStudent as Student;
-
-  // 2) Liaison par compte (profiles.student_id)
   const { data } = await supabase
     .from("profiles")
     .select("student_id, students(*)")

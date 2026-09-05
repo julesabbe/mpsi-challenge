@@ -15,14 +15,16 @@ export default async function ChallengesPage() {
   const student = await getMyStudent();
 
   if (profile?.role === "admin" && !student) redirect("/admin");
-  if (!student) redirect("/select-student");
+  if (!student) redirect("/login-student");
   const team = await getMyTeam(student.id);
-  if (!team) redirect("/create-team");
+  if (!team && student.track === "mpsi") redirect("/teams");
 
   const supabase = await createClient();
   const [chRes, subRes, unreadRes] = await Promise.all([
     supabase.from("challenges").select("*").eq("active", true).order("points", { ascending: false }),
-    supabase.from("submissions").select("*").eq("team_id", team.id),
+    team
+      ? supabase.from("submissions").select("*").eq("team_id", team.id)
+      : Promise.resolve({ data: [] } as unknown as { data: Submission[] }),
     supabase
       .from("notifications")
       .select("*", { count: "exact", head: true })

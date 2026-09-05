@@ -19,6 +19,7 @@ export interface Student {
   id: string;
   first_name: string;
   last_name: string | null;
+  track: "mpsi" | "mpsi2";
   active: boolean;
   created_at: string;
 }

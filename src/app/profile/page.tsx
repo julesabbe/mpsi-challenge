@@ -14,9 +14,9 @@ export default async function ProfilePage() {
   const student = await getMyStudent();
 
   if (profile?.role === "admin" && !student) redirect("/admin");
-  if (!student) redirect("/select-student");
+  if (!student) redirect("/login-student");
   const team = await getMyTeam(student.id);
-  if (!team) redirect("/create-team");
+  if (!team && student.track === "mpsi") redirect("/teams");
 
   const supabase = await createClient();
   const [scores, mySubs, unreadRes] = await Promise.all([
@@ -24,7 +24,8 @@ export default async function ProfilePage() {
     supabase
       .from("submissions")
       .select("id, status")
-      .eq("submitted_by", student.id),
+      .eq("submitted_by", student.id)
+      .eq("team_id", team?.id ?? "00000000-0000-0000-0000-000000000000"),
     supabase
       .from("notifications")
       .select("*", { count: "exact", head: true })
@@ -32,7 +33,7 @@ export default async function ProfilePage() {
       .eq("read", false),
   ]);
 
-  const myRow = scores.find((r) => r.team.id === team.id);
+  const myRow = team ? scores.find((r) => r.team.id === team.id) : undefined;
   const subs = mySubs.data ?? [];
   const sentByMe = subs.length;
   const approvedByMe = subs.filter((s) => s.status === "approved").length;
@@ -53,7 +54,11 @@ export default async function ProfilePage() {
             {studentName(student)}
           </h1>
           <p className="text-sm text-zinc-400">
-            Membre de {team.emoji} {team.name}
+            {team
+              ? `Membre de ${team.emoji} ${team.name}`
+              : student.track === "mpsi2"
+                ? "Compte MP/PSI — spectateur"
+                : "MPSI — pas encore d'équipe"}
           </p>
           <p className="mt-1 text-xs text-zinc-500">
             Identité verrouillée · compte créé le {formatDate(student.created_at)}

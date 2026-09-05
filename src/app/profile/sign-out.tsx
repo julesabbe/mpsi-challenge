@@ -9,15 +9,14 @@ export function SignOutButton() {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
-    // Le retour à la racine renverra : invité (élève/visiteur) ou /login
-    // (admin), et l'élève pourra se redésigner sur ce même appareil.
-    router.replace("/");
+    // La déconnexion est totale : aucune session ne reste liée à l'appareil.
+    router.replace("/guest");
     router.refresh();
   }
 
   return (
     <button type="button" className="btn-ghost w-full text-red-300" onClick={handleSignOut}>
-      {isAdmin ? "Se déconnecter" : "Changer d'identité sur cet appareil"}
+      {isAdmin ? "Se déconnecter (admin)" : "Se déconnecter"}
     </button>
   );
 }

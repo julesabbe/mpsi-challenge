@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getTeamScores, getMyStudent, getMyTeam } from "@/lib/queries";
+import {
+  getTeamScores,
+  getMyProfile,
+  getMyStudent,
+  getMyTeam,
+} from "@/lib/queries";
 import { LeaderboardList } from "@/components/LeaderboardList";
 import { EmptyState } from "@/components/EmptyState";
 import {
@@ -16,6 +21,7 @@ import { formatPoints } from "@/lib/utils";
 export const metadata = { title: "MPSI Challenge" };
 export const dynamic = "force-dynamic";
 
+/** Page d'accueil publique — c'est la page affichée par défaut sur /. */
 export default async function GuestPage() {
   const supabase = await createClient();
   const [scores, chRes] = await Promise.all([
@@ -28,13 +34,11 @@ export default async function GuestPage() {
       .limit(6),
   ]);
 
-  // Si l'appareil a déjà une identité (retour d'un élève), on le renvoie
-  // directement dans son parcours.
+  // Page d'accueil publique : PAS de redirection automatique. Une session
+  // existante n'est utilisée que pour afficher un raccourci vers l'espace
+  // personnel — personne n'est connecté d'office.
+  const profile = await getMyProfile();
   const student = await getMyStudent();
-  if (student) {
-    const team = await getMyTeam(student.id);
-    redirect(team ? "/dashboard" : "/create-team");
-  }
 
   const challenges = (chRes.data ?? []) as unknown as Challenge[];
 
@@ -56,11 +60,25 @@ export default async function GuestPage() {
       </div>
 
       <div className="mt-8 space-y-3">
-        <Link href="/select-student" className="btn-primary text-lg">
-          JE SUIS UN ÉLÈVE — CHOISIR MON PRÉNOM
+        {/* Session existante : simple raccourci, jamais de connexion forcée */}
+        {profile?.role === "admin" && !student ? (
+          <Link href="/admin" className="btn-ghost block w-full text-center text-base font-semibold">
+            🛡️ ESPACE SUPER ADMIN
+          </Link>
+        ) : student ? (
+          <Link href="/dashboard" className="btn-ghost block w-full text-center text-base font-semibold">
+            👋 REPRENDRE ({student.first_name})
+          </Link>
+        ) : null}
+        <Link href="/register" className="btn-primary text-lg">
+          S&apos;INSCRIRE
         </Link>
-        <p className="text-center text-xs text-zinc-500">
-          Un seul choix possible par appareil, ensuite tout est automatique.
+        <Link href="/login-student" className="btn-ghost block w-full text-center text-base font-semibold">
+          J&apos;AI DÉJÀ UN COMPTE
+        </Link>
+        <p className="mt-4 text-center text-xs text-zinc-500">
+          Les défis, les équipes et le classement sont visibles ci-dessous,
+          inscrit ou non.
         </p>
       </div>
 

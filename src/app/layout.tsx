@@ -51,7 +51,11 @@ export default async function RootLayout({
   return (
     <html lang="fr" className={geist.variable}>
       <body className="min-h-dvh bg-zinc-950 font-sans text-zinc-100 antialiased">
-        <SupabaseProvider unread={unread} isAdmin={profile?.role === "admin"}>
+        <SupabaseProvider
+          unread={unread}
+          isAdmin={profile?.role === "admin"}
+          isMpsi2={student?.track === "mpsi2"}
+        >
           {children}
         </SupabaseProvider>
       </body>

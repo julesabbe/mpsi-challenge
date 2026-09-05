@@ -14,9 +14,9 @@ export default async function LeaderboardPage() {
   const student = await getMyStudent();
 
   if (profile?.role === "admin" && !student) redirect("/admin");
-  if (!student) redirect("/select-student");
+  if (!student) redirect("/login-student");
   const team = await getMyTeam(student.id);
-  if (!team) redirect("/create-team");
+  if (!team && student.track === "mpsi") redirect("/teams");
 
   const supabase = await createClient();
   const [scores, unreadRes] = await Promise.all([
@@ -49,7 +49,7 @@ export default async function LeaderboardPage() {
             hint="Crée ton équipe pour être le premier au classement !"
           />
         ) : (
-          <LeaderboardList rows={scores} myTeamId={team.id} />
+          <LeaderboardList rows={scores} myTeamId={team?.id} />
         )}
       </div>
     </div>

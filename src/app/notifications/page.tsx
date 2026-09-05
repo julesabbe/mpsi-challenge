@@ -15,7 +15,7 @@ export default async function NotificationsPage() {
   const student = await getMyStudent();
 
   if (profile?.role === "admin" && !student) redirect("/admin");
-  if (!student) redirect("/select-student");
+  if (!student) redirect("/login-student");
 
   const supabase = await createClient();
   const { data } = await supabase

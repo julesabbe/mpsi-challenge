@@ -27,19 +27,22 @@ export default async function ChallengeDetailPage({
   const student = await getMyStudent();
 
   if (profile?.role === "admin" && !student) redirect("/admin");
-  if (!student) redirect("/select-student");
+  if (!student) redirect("/login-student");
   const team = await getMyTeam(student.id);
-  if (!team) redirect("/create-team");
+  const isMpsi = student.track === "mpsi";
+  if (!team && isMpsi) redirect("/teams");
 
   const supabase = await createClient();
   const [chRes, subRes, unreadRes] = await Promise.all([
     supabase.from("challenges").select("*").eq("id", id).maybeSingle(),
-    supabase
-      .from("submissions")
-      .select("*")
-      .eq("team_id", team.id)
-      .eq("challenge_id", id)
-      .order("submitted_at", { ascending: false }),
+    team
+      ? supabase
+          .from("submissions")
+          .select("*")
+          .eq("team_id", team.id)
+          .eq("challenge_id", id)
+          .order("submitted_at", { ascending: false })
+      : Promise.resolve({ data: [] } as unknown as { data: Submission[] }),
     supabase
       .from("notifications")
       .select("*", { count: "exact", head: true })
@@ -101,7 +104,14 @@ export default async function ChallengeDetailPage({
       </div>
 
       <div className="mt-5">
-        {approved ? (
+        {!team ? (
+          <div className="card p-5 text-center">
+            <p className="text-sm text-zinc-400">
+              👀 Tu suis les défis en MP/PSI — les équipes MPSI s&apos;en
+              chargent ! Aucune soumission possible depuis ton compte.
+            </p>
+          </div>
+        ) : approved ? (
           <div className="card animate-pop border-emerald-500/40 bg-emerald-500/10 p-5 text-center">
             <span className="text-4xl" aria-hidden>
               🟢
@@ -129,7 +139,7 @@ export default async function ChallengeDetailPage({
         ) : (
           <SubmitPanel
             challengeId={challenge.id}
-            teamId={team.id}
+            teamId={team!.id}
             studentId={student.id}
             videoRequired={challenge.video_required}
             points={challenge.points}

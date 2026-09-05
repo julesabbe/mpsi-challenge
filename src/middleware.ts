@@ -31,12 +31,21 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  const publicPaths = ["/login", "/guest", "/welcome"];
+  // Pages publiques : admin, invité, inscription et connexion élèves.
+  const publicPaths = [
+    "/login",
+    "/guest",
+    "/welcome",
+    "/register",
+    "/login-student",
+  ];
   const isPublic = publicPaths.some(
     (p) => path === p || path.startsWith(p + "/")
   );
 
   if (!user && !isPublic) {
+    // Page d'accueil publique par défaut — l'inscription/connexion est
+    // toujours à l'initiative de l'utilisateur, jamais imposée.
     const url = request.nextUrl.clone();
     url.pathname = "/guest";
     url.search = "";
@@ -47,7 +56,9 @@ export async function middleware(request: NextRequest) {
     return redirectResponse;
   }
 
-  // Déjà connecté qui va sur /login : on le renvoie à la racine (qui résoudra)
+  // Déjà connecté qui va sur /login (admin) : on le renvoie à la racine.
+  // Les pages élève (/register, /login-student) restent accessibles pour
+  // permettre de changer de compte (déconnexion manuelle via le profil).
   if (user && path === "/login") {
     const url = request.nextUrl.clone();
     url.pathname = "/";

@@ -8,6 +8,7 @@ type Ctx = {
   supabase: SupabaseClient;
   unread: number;
   isAdmin: boolean;
+  isMpsi2: boolean;
 };
 
 const SupabaseContext = createContext<Ctx | null>(null);
@@ -22,14 +23,16 @@ export function SupabaseProvider({
   children,
   unread,
   isAdmin,
+  isMpsi2,
 }: {
   children: React.ReactNode;
   unread: number;
   isAdmin: boolean;
+  isMpsi2: boolean;
 }) {
   const supabase = createClient();
   return (
-    <SupabaseContext.Provider value={{ supabase, unread, isAdmin }}>
+    <SupabaseContext.Provider value={{ supabase, unread, isAdmin, isMpsi2 }}>
       {children}
     </SupabaseContext.Provider>
   );
