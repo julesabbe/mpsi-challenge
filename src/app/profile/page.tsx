@@ -1,6 +1,13 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getMyProfile, getMyStudent, getMyTeam, getTeamScores } from "@/lib/queries";
+import {
+  getMyProfile,
+  getMyStudent,
+  getMyStudents,
+  getMyTeam,
+  getTeamScores,
+} from "@/lib/queries";
+import { IdentityPanel } from "@/components/IdentityPanel";
 import { TopBar } from "@/components/TopBar";
 import { BottomNav } from "@/components/BottomNav";
 import { SignOutButton } from "./sign-out";
@@ -12,6 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function ProfilePage() {
   const profile = await getMyProfile();
   const student = await getMyStudent();
+  const identities = await getMyStudents();
 
   if (profile?.role === "admin" && !student) redirect("/admin");
   if (!student) redirect("/login-student");
@@ -43,7 +51,13 @@ export default async function ProfilePage() {
       <TopBar unread={unreadRes.count ?? 0} isAdmin={profile?.role === "admin"} />
       <BottomNav />
 
-      <div className="animate-rise mt-4 md:mt-0">
+      <div className="animate-rise mt-4 space-y-4 md:mt-0">
+        <IdentityPanel
+          students={identities}
+          isAdmin={profile?.role === "admin"}
+          activeTrack={student?.track ?? null}
+        />
+
         <div className="card p-6 text-center">
           <span className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-500 text-2xl font-black text-white">
             {student.first_name.charAt(0)}
@@ -60,7 +74,7 @@ export default async function ProfilePage() {
                 : "MPSI — pas encore d'équipe"}
           </p>
           <p className="mt-1 text-xs text-zinc-500">
-            Identité verrouillée · compte créé le {formatDate(student.created_at)}
+            Compte créé le {formatDate(student.created_at)}
           </p>
         </div>
 

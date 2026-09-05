@@ -1,29 +1,53 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile, Student, Team } from "@/lib/types";
 
 /**
- * Élève lié au compte auth connecté (session Supabase — fonctionne depuis
- * n'importe quel appareil). Renvoie null si aucun compte élève connecté.
+ * Toutes les identités élèves liées au compte auth connecté (session
+ * Supabase — fonctionne depuis n'importe quel appareil). Un même compte peut
+ * être à la fois Super Admin, élève MPSI et élève MP/PSI.
  */
-export async function getMyStudent(): Promise<Student | null> {
+export async function getMyStudents(): Promise<Student[]> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) return [];
 
   const { data } = await supabase
     .from("profiles")
     .select("student_id, students(*)")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
-  const student = (
-    data as unknown as { students: Student | null } | null
-  )?.students;
-  return student && student.active ? student : null;
+    .eq("auth_user_id", user.id);
+  const students = ((data ?? []) as unknown as Array<{
+    students: Student | null;
+  }>)
+    .map((r) => r.students)
+    .filter((s): s is Student => !!s && s.active);
+
+  // MPSI d'abord, puis MP/PSI
+  students.sort((a, b) =>
+    a.track === b.track ? 0 : a.track === "mpsi" ? -1 : 1
+  );
+  return students;
 }
 
-/** Profil du compte courant — côté serveur. */
+/**
+ * Élève « actif » du compte connecté : celui choisi via le cookie mc_track
+ * (MPSI ou MP/PSI), sinon le seul existant, sinon le premier. Renvoie null
+ * si aucun compte élève n'est lié.
+ */
+export async function getMyStudent(): Promise<Student | null> {
+  const students = await getMyStudents();
+  if (students.length === 0) return null;
+  if (students.length === 1) return students[0];
+  const cookieStore = await cookies();
+  const chosen = cookieStore.get("mc_track")?.value;
+  return (
+    students.find((s) => s.track === chosen) ?? students[0]
+  );
+}
+
+/** Profil du compte courant — côté serveur (préfère le rôle admin). */
 export async function getMyProfile(): Promise<Profile | null> {
   const supabase = await createClient();
   const {
@@ -33,9 +57,10 @@ export async function getMyProfile(): Promise<Profile | null> {
   const { data } = await supabase
     .from("profiles")
     .select("*")
-    .eq("auth_user_id", user.id)
-    .single();
-  return (data as Profile | null) ?? null;
+    .eq("auth_user_id", user.id);
+  const profiles = (data ?? []) as Profile[];
+  if (profiles.length === 0) return null;
+  return profiles.find((p) => p.role === "admin") ?? profiles[0];
 }
 
 /** Équipe de l'élève courant (null si aucune) — côté serveur. */

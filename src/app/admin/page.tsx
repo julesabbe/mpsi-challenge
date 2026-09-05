@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getTeamScores } from "@/lib/queries";
+import { getMyStudent, getMyStudents, getTeamScores } from "@/lib/queries";
+import { IdentityPanel } from "@/components/IdentityPanel";
 import { formatPoints, timeAgo } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,12 @@ export default async function AdminDashboardPage() {
     .filter((t: { amount: number }) => t.amount > 0)
     .reduce((acc: number, t: { amount: number }) => acc + t.amount, 0);
 
+  // Identités du compte admin (Super Admin + éventuels profils élève liés)
+  const [identities, activeStudent] = await Promise.all([
+    getMyStudents(),
+    getMyStudent(),
+  ]);
+
   const stats = [
     { label: "Élèves MPSI", value: String(mpsiStudents.length), icon: "👥", href: "/admin/students", sub: `${mpsiStudents.filter((s) => s.active).length} actifs` },
     { label: "Équipes", value: String(teamsRes.data?.length ?? 0), icon: "🏆", href: "/admin/teams" },
@@ -72,6 +79,14 @@ export default async function AdminDashboardPage() {
       <p className="mt-1 text-sm text-zinc-400">
         Vue d&apos;ensemble de la compétition.
       </p>
+
+      <div className="mt-5">
+        <IdentityPanel
+          students={identities}
+          isAdmin
+          activeTrack={activeStudent?.track ?? null}
+        />
+      </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-5">
         {stats.map((s) => (

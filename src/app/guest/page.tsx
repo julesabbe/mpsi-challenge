@@ -66,9 +66,16 @@ export default async function GuestPage() {
             🛡️ ESPACE SUPER ADMIN
           </Link>
         ) : student ? (
-          <Link href="/dashboard" className="btn-ghost block w-full text-center text-base font-semibold">
-            👋 REPRENDRE ({student.first_name})
-          </Link>
+          <div className="space-y-3">
+            <Link href="/dashboard" className="btn-ghost block w-full text-center text-base font-semibold">
+              👋 REPRENDRE ({student.first_name})
+            </Link>
+            {profile?.role === "admin" ? (
+              <Link href="/admin" className="btn-ghost block w-full text-center text-base font-semibold">
+                🛡️ ESPACE SUPER ADMIN
+              </Link>
+            ) : null}
+          </div>
         ) : null}
         <Link href="/register" className="btn-primary text-lg">
           S&apos;INSCRIRE
