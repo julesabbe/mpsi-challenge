@@ -63,14 +63,19 @@ export function SlotsGrid({
       return;
     }
     setBusy(true);
-    const { error: rpcError } = await supabase.rpc("claim_team_slot", {
+    const args: Record<string, unknown> = {
       p_slot: openSlot,
       p_team_name: name.trim(),
       p_emoji: emoji,
       p_member2: m2,
       p_member3: m3,
-      p_member4: m4,
-    });
+    };
+    // p_member4 n'est envoyé que pour la case 15, afin de rester compatible
+    // avec la fonction claim_team_slot à 5 paramètres pour les cases 1-14.
+    if (isFour) {
+      args.p_member4 = m4;
+    }
+    const { error: rpcError } = await supabase.rpc("claim_team_slot", args);
     setBusy(false);
     if (rpcError) {
       setError(rpcError.message);
