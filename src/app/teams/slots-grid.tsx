@@ -29,6 +29,7 @@ export function SlotsGrid({
   const [openSlot, setOpenSlot] = useState<number | null>(null);
   const [m2, setM2] = useState<string | null>(null);
   const [m3, setM3] = useState<string | null>(null);
+  const [m4, setM4] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("⚡");
   const [busy, setBusy] = useState(false);
@@ -38,6 +39,7 @@ export function SlotsGrid({
     setOpenSlot(slot);
     setM2(null);
     setM3(null);
+    setM4(null);
     setName("");
     setEmoji("⚡");
     setError(null);
@@ -46,7 +48,13 @@ export function SlotsGrid({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!m2 || !m3) {
+    const isFour = openSlot === 15;
+    if (isFour) {
+      if (!m2 || !m3 || !m4) {
+        setError("La case 15 demande 3 coéquipiers (en plus de toi, 4 membres).");
+        return;
+      }
+    } else if (!m2 || !m3) {
       setError("Coche 2 coéquipiers (en plus de toi).");
       return;
     }
@@ -61,6 +69,7 @@ export function SlotsGrid({
       p_emoji: emoji,
       p_member2: m2,
       p_member3: m3,
+      p_member4: m4,
     });
     setBusy(false);
     if (rpcError) {
@@ -72,10 +81,13 @@ export function SlotsGrid({
   }
 
   function togglePick(id: string) {
+    const isFour = openSlot === 15;
     if (m2 === id) setM2(null);
     else if (m3 === id) setM3(null);
+    else if (m4 === id) setM4(null);
     else if (!m2) setM2(id);
     else if (!m3) setM3(id);
+    else if (isFour && !m4) setM4(id);
   }
 
   return (
@@ -168,11 +180,14 @@ export function SlotsGrid({
 
           <div>
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
-              Coche 2 coéquipiers
+              {openSlot === 15
+                ? "Coche 3 coéquipiers (case 15 : 4 membres)"
+                : "Coche 2 coéquipiers"}
             </p>
             <div className="max-h-52 space-y-1.5 overflow-y-auto pr-1">
               {availableTeammates.map((o) => {
-                const picked = m2 === o.id ? 2 : m3 === o.id ? 3 : 0;
+                const picked =
+                  m2 === o.id ? 2 : m3 === o.id ? 3 : m4 === o.id ? 4 : 0;
                 return (
                   <button
                     key={o.id}
