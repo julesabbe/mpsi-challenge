@@ -49,6 +49,18 @@ export function validateVideoFile(file: File): string | null {
   return null;
 }
 
+/**
+ * Identifiant unique utilisable dans un chemin de stockage.
+ * Fallback si `crypto.randomUUID` est indisponible (http non sécurisé, vieux
+ * navigateurs) — l'app ne doit jamais planter sur un dépôt de vidéo.
+ */
+export function newId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export function ordinalRank(rank: number): string {
   if (rank === 1) return "1er";
   return `${rank}e`;

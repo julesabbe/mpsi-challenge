@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSupabaseCtx } from "@/lib/supabase/provider";
-import { validateVideoFile } from "@/lib/utils";
+import { newId, validateVideoFile } from "@/lib/utils";
 import { cx } from "@/lib/utils";
+import { removeVideo, uploadVideo, videoExtension } from "@/lib/upload-video";
 
 /**
  * Vidéo de présentation de l'équipe : visible par l'équipe (et les comptes
@@ -76,49 +77,31 @@ export function TeamPresentation({
     setError(null);
     setBusy(true);
     setProgress(0);
+    // Nom de fichier unique : l'envoi reste un simple INSERT (autorisé par les
+    // policies Storage), sans upsert ni écrasement — l'ancienne vidéo est
+    // supprimée après le basculement.
+    const previous = videoPath;
+    const path = `${teamId}/presentation-${newId()}.${videoExtension(file)}`;
     try {
-      const ext = (file.name.split(".").pop() ?? "mp4").toLowerCase();
-      const path = `${teamId}/presentation.${ext}`;
-
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Session expirée, reconnecte-toi.");
-
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open(
-          "POST",
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/challenge-submissions/${path}`
-        );
-        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-        xhr.setRequestHeader("Content-Type", file.type || "video/mp4");
-        xhr.setRequestHeader("x-upsert", "true"); // remplace l'ancienne
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            setProgress(Math.round((e.loaded / e.total) * 100));
-          }
-        };
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve();
-          else reject(new Error(`Échec de l'envoi (HTTP ${xhr.status}).`));
-        };
-        xhr.onerror = () =>
-          reject(new Error("Upload interrompu. Vérifie ta connexion et réessaie."));
-        xhr.send(file);
-      });
+      await uploadVideo(supabase, path, file, { onProgress: setProgress });
 
       const { error: rpcError } = await supabase.rpc("set_team_presentation", {
         p_team_id: teamId,
         p_path: path,
       });
-      if (rpcError) throw rpcError;
+      if (rpcError) {
+        await removeVideo(supabase, path);
+        throw rpcError;
+      }
+
+      if (previous && previous !== path) await removeVideo(supabase, previous);
 
       reset();
       router.refresh();
     } catch (err) {
       const message = (err as Error).message || "Une erreur est survenue.";
       setError(
-        message.includes("row-level security")
+        message.includes("row-level security") || message.includes("permissions")
           ? "Vous n'avez pas les permissions nécessaires."
           : message
       );
@@ -127,8 +110,9 @@ export function TeamPresentation({
     }
   }
 
-  async function removeVideo() {
+  async function deleteVideo() {
     setError(null);
+    const previous = videoPath;
     const { error: rpcError } = await supabase.rpc("set_team_presentation", {
       p_team_id: teamId,
       p_path: "",
@@ -137,6 +121,8 @@ export function TeamPresentation({
       setError(rpcError.message);
       return;
     }
+    // La référence en base est retirée : on nettoie le fichier (best-effort).
+    await removeVideo(supabase, previous);
     router.refresh();
   }
 
@@ -186,7 +172,7 @@ export function TeamPresentation({
           {canManage ? (
             <button
               type="button"
-              onClick={removeVideo}
+              onClick={deleteVideo}
               className="mt-2 text-xs font-semibold text-zinc-500 transition hover:text-red-300"
             >
               🗑️ Retirer la vidéo de présentation

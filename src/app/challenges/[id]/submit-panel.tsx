@@ -3,7 +3,8 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSupabaseCtx } from "@/lib/supabase/provider";
-import { cx, formatPoints, validateVideoFile } from "@/lib/utils";
+import { cx, formatPoints, newId, validateVideoFile } from "@/lib/utils";
+import { removeVideo, uploadVideo, videoExtension } from "@/lib/upload-video";
 
 type Phase = "idle" | "uploading" | "done";
 
@@ -59,56 +60,28 @@ export function SubmitPanel({
     setPhase("uploading");
     setProgress(0);
 
+    // Le chemin est calculé AVANT l'envoi : la ligne `submissions` est créée
+    // avec sa vidéo déjà en place (la colonne video_path est NOT NULL, et un
+    // élève n'a pas le droit de modifier une soumission après coup).
+    const path = `${teamId}/${challengeId}/${newId()}.${videoExtension(file)}`;
+
     try {
-      const { data: sub, error: subError } = await supabase
-        .from("submissions")
-        .insert({
-          challenge_id: challengeId,
-          team_id: teamId,
-          submitted_by: studentId,
-          status: "pending",
-        })
-        .select("id")
-        .single();
-      if (subError) throw subError;
+      await uploadVideo(supabase, path, file, { onProgress: setProgress });
 
-      const ext = (file.name.split(".").pop() ?? "mp4").toLowerCase();
-      const path = `${teamId}/${challengeId}/${sub.id}.${ext}`;
-
-      // Upload via XHR pour suivre la progression (l'API REST Storage avec le
-      // JWT de l'utilisateur applique les mêmes policies RLS que supabase-js).
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Session expirée, reconnecte-toi.");
-
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open(
-          "POST",
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/challenge-submissions/${path}`
-        );
-        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-        xhr.setRequestHeader("Content-Type", file.type || "video/mp4");
-        xhr.setRequestHeader("x-upsert", "false");
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            setProgress(Math.round((e.loaded / e.total) * 100));
-          }
-        };
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve();
-          else reject(new Error(`Échec de l'envoi (HTTP ${xhr.status}).`));
-        };
-        xhr.onerror = () =>
-          reject(new Error("Upload interrompu. Vérifie ta connexion et réessaie."));
-        xhr.send(file);
+      const { error: subError } = await supabase.from("submissions").insert({
+        challenge_id: challengeId,
+        team_id: teamId,
+        submitted_by: studentId,
+        video_path: path,
+        status: "pending",
       });
 
-      const { error: updError } = await supabase
-        .from("submissions")
-        .update({ video_path: path })
-        .eq("id", sub.id);
-      if (updError) throw updError;
+      if (subError) {
+        // Pas de vidéo orpheline dans le bucket si la soumission est refusée
+        // (défi déjà en attente, droits insuffisants…).
+        await removeVideo(supabase, path);
+        throw subError;
+      }
 
       setProgress(100);
       setPhase("done");
@@ -116,7 +89,7 @@ export function SubmitPanel({
     } catch (err) {
       setPhase("idle");
       const message = (err as Error).message || "Une erreur est survenue.";
-      if (message.includes("row-level security")) {
+      if (message.includes("row-level security") || message.includes("permissions")) {
         setError("Vous n'avez pas les permissions nécessaires.");
       } else if (message.includes("already") || message.includes("duplicate")) {
         setError("Ce défi est déjà en attente de validation.");
