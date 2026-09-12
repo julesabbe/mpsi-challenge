@@ -63,18 +63,18 @@ export function SlotsGrid({
       return;
     }
     setBusy(true);
+    // On envoie TOUJOURS les 6 paramètres (p_member4 = null pour les cases
+    // 1-14). Envoyé à 5 arguments, l'appel était ambigu dès que la base
+    // contenait à la fois la surcharge à 5 et celle à 6 paramètres, et
+    // PostgreSQL répondait « Could not choose the best candidate function ».
     const args: Record<string, unknown> = {
       p_slot: openSlot,
       p_team_name: name.trim(),
       p_emoji: emoji,
       p_member2: m2,
       p_member3: m3,
+      p_member4: isFour ? m4 : null,
     };
-    // p_member4 n'est envoyé que pour la case 15, afin de rester compatible
-    // avec la fonction claim_team_slot à 5 paramètres pour les cases 1-14.
-    if (isFour) {
-      args.p_member4 = m4;
-    }
     const { error: rpcError } = await supabase.rpc("claim_team_slot", args);
     setBusy(false);
     if (rpcError) {
